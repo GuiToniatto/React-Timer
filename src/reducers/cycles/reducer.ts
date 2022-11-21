@@ -1,0 +1,46 @@
+import { produce } from 'immer'
+
+import { ICycleState } from '../../interfaces/ICycleState'
+import { ActionTypes } from './actions'
+
+export function cyclesReducer(state: ICycleState, action: any) {
+  switch (action.type) {
+    case ActionTypes.ADD_NEW_CYCLE:
+      return produce(state, (draft) => {
+        draft.cycles.push(action.payload.newCycle)
+        draft.activeCycleId = action.payload.newCycle.id
+      })
+    case ActionTypes.INTERRUPT_CURRENT_CYCLE: {
+      const currentCycleIndex = state.cycles.findIndex((cycle) => {
+        return cycle.id === state.activeCycleId
+      })
+
+      if (currentCycleIndex < 0) {
+        return state
+      }
+
+      return produce(state, (draft) => {
+        draft.activeCycleId = null
+        draft.cycles[currentCycleIndex].interruptedDate = new Date()
+        draft.cycles[currentCycleIndex].status = 'interrupted'
+      })
+    }
+    case ActionTypes.FINISH_CURRENT_CYCLE: {
+      const currentCycleIndex = state.cycles.findIndex((cycle) => {
+        return cycle.id === state.activeCycleId
+      })
+
+      if (currentCycleIndex < 0) {
+        return state
+      }
+
+      return produce(state, (draft) => {
+        draft.activeCycleId = null
+        draft.cycles[currentCycleIndex].finishedDate = new Date()
+        draft.cycles[currentCycleIndex].status = 'finished'
+      })
+    }
+    default:
+      return state
+  }
+}
